@@ -31,6 +31,7 @@ const Header = () => {
             </Link>
           ) : (
             <Button
+              className="rounded-md bg-foreground px-3 py-1.5 text-background"
               onClick={async () =>
                 authClient.signIn.social({
                   provider: "google",
