@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/auth-client";
 import { useRouter } from "next/navigation";
 
 const Hero = () => {

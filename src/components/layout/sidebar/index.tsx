@@ -1,7 +1,7 @@
 "use client";
 import { LogOut, Settings } from "lucide-react";
 
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/auth-client";
 
 import {
   Sidebar,

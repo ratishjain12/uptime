@@ -19,6 +19,7 @@ model User {
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
+  monitors      Monitor[]
 
   @@unique([email])
   @@map("user")
@@ -67,4 +68,27 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+model Monitor {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name           String
+  url            String
+
+  isActive       Boolean  @default(true)
+  intervalSec    Int      @default(300)
+  lastCheckedAt  DateTime?
+  nextCheckAt    DateTime?
+  lastStatus     String?
+  lastLatencyMs  Int?
+  lastNotifiedAt DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, url])
+  @@map("monitor")
 }
