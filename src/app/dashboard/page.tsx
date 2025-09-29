@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AddMonitorModal } from "@/components/dashboard/modal";
 import { getMonitors } from "@/actions/monitor";
 import { Separator } from "@/components/ui/separator";
-import { MonitorCard } from "@/components/dashboard/monitor-card";
+import { MonitorCard } from "@/components/dashboard/card";
 
 const getData = async () => {
   const monitors = await getMonitors();

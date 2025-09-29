@@ -40,7 +40,7 @@ export const checkMonitor = inngest.createFunction(
             statusDetail: res.ok ? "OK" : `HTTP ${res.status}`,
           };
         } catch (error: unknown) {
-          console.error(`Monitor ${monitor.id} network error`, error);
+          console.warn(`Monitor ${monitor.id} network error`, error);
 
           const message =
             error instanceof Error ? error.message : "network error";
@@ -82,19 +82,19 @@ export const checkMonitor = inngest.createFunction(
         Date.now() - lastNotifiedAtMs > 30 * 60 * 1000; // >30m since last alert
 
       if (shouldNotify) {
-        await step.run("fire alert", async () => {
-          await step.sendEvent("send-monitor-down-alert", {
-            name: "monitor/down",
-            data: {
-              monitorId: monitor.id,
-              url: monitor.url,
-              name: monitor.name,
-              userId: monitor.userId,
-              userEmail: monitor.user.email,
-              statusDetail,
-            },
-          });
+        await step.sendEvent("send-monitor-down-alert", {
+          name: "monitor/down",
+          data: {
+            monitorId: monitor.id,
+            url: monitor.url,
+            name: monitor.name,
+            userId: monitor.userId,
+            userEmail: monitor.user.email,
+            statusDetail,
+          },
+        });
 
+        await step.run("mark notified", async () => {
           await prisma.monitor.update({
             where: { id: monitor.id },
             data: { lastNotifiedAt: now },
