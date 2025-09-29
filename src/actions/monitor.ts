@@ -60,12 +60,25 @@ export const updateMonitor = async (monitor: UpdateMonitorInput) => {
     throw new Error("Unauthorized");
   }
 
+  const existing = await prisma.monitor.findUnique({
+    where: { id: monitor.id },
+  });
+
+  if (!existing) throw new Error("Monitor not found");
+
+  const nextInterval = monitor.intervalSec ?? existing.intervalSec;
+  const makeNextCheck =
+    (monitor.isActive ?? existing.isActive)
+      ? new Date(Date.now() + nextInterval * 1000)
+      : null;
+
   const data = Object.fromEntries(
     Object.entries({
       name: monitor.name,
       url: monitor.url,
       intervalSec: monitor.intervalSec,
       isActive: monitor.isActive,
+      nextCheckAt: makeNextCheck,
     }).filter(([, value]) => value !== undefined)
   );
 
