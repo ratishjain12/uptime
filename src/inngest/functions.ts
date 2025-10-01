@@ -1,4 +1,5 @@
 import { resend } from "@/lib/resend/resend";
+import { sendMonitorSlackAlertForUser } from "@/actions/alerts";
 import { inngest } from "./client";
 import { prisma } from "@/lib/prisma/prisma";
 
@@ -139,7 +140,7 @@ export const sendMonitorDownAlert = inngest.createFunction(
   { id: "send-monitor-down-alert" },
   { event: "monitor/down" },
   async ({ event, step }) => {
-    const { name, url, statusDetail, userEmail } = event.data;
+    const { name, url, statusDetail, userEmail, userId } = event.data;
 
     await step.run("send-alert", async () => {
       await resend.emails.send({
@@ -151,6 +152,16 @@ export const sendMonitorDownAlert = inngest.createFunction(
         <p>URL: <a href="${url}">${url}</a></p>
         <p>Status: ${statusDetail}</p>
       `,
+      });
+    });
+
+    await step.run("send-slack-alert", async () => {
+      await sendMonitorSlackAlertForUser(userId, {
+        title: "Monitor DOWN",
+        monitorName: name,
+        monitorUrl: url,
+        status: statusDetail,
+        latencyMs: null,
       });
     });
   }

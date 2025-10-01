@@ -2,7 +2,7 @@ import {
   disconnectSlackWebhook,
   getSlackSettings,
   updateSlackWebhook,
-} from "@/actions/settings/slack";
+} from "@/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
