@@ -18,7 +18,10 @@ const Page = () => {
   }, [session, router]);
 
   const handleGoogleSignIn = async () => {
-    await authClient.signIn.social({ provider: "google" });
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+    });
   };
 
   if (isPending || session) {
