@@ -4,11 +4,26 @@ import { authClient } from "@/lib/auth/auth-client";
 import { Button } from "@/components/ui/button";
 import { Hexagon } from "lucide-react";
 import { GoogleIcon } from "@/assets/Icons";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (session) {
+      router.replace("/dashboard");
+    }
+  }, [session, router]);
+
   const handleGoogleSignIn = async () => {
     await authClient.signIn.social({ provider: "google" });
   };
+
+  if (isPending || session) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen grid place-items-center p-6">
