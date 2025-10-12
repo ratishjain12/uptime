@@ -1,5 +1,6 @@
 import { resend } from "@/lib/resend/resend";
 import { sendMonitorSlackAlertForUser } from "@/actions/alerts";
+import { sendWebhookAlertForUser } from "@/actions/alerts/webhook";
 import { inngest } from "./client";
 import { prisma } from "@/lib/prisma/prisma";
 
@@ -92,6 +93,7 @@ export const checkMonitor = inngest.createFunction(
             userId: monitor.userId,
             userEmail: monitor.user.email,
             statusDetail,
+            latency,
           },
         });
 
@@ -103,6 +105,7 @@ export const checkMonitor = inngest.createFunction(
         });
       }
     }
+
 
     return { status, latency, statusDetail };
   }
@@ -140,7 +143,7 @@ export const sendMonitorDownAlert = inngest.createFunction(
   { id: "send-monitor-down-alert" },
   { event: "monitor/down" },
   async ({ event, step }) => {
-    const { name, url, statusDetail, userEmail, userId } = event.data;
+    const { name, url, statusDetail, userEmail, userId, latency } = event.data;
 
     await step.run("send-alert", async () => {
       await resend.emails.send({
@@ -161,8 +164,27 @@ export const sendMonitorDownAlert = inngest.createFunction(
         monitorName: name,
         monitorUrl: url,
         status: statusDetail,
-        latencyMs: null,
+        latencyMs: latency,
+      });
+    });
+
+    await step.run("send-webhook-alert", async () => {
+      await sendWebhookAlertForUser(userId, {
+        event: "monitor.down",
+        monitor: {
+          id: event.data.monitorId,
+          name,
+          url,
+          status: statusDetail,
+          responseTime: latency,
+        },
+        timestamp: new Date().toISOString(),
+        user: {
+          id: userId,
+          email: userEmail,
+        },
       });
     });
   }
 );
+

@@ -7,6 +7,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -21,6 +22,7 @@ model User {
   accounts      Account[]
   monitors      Monitor[]
   slackWebhook  String?
+  customWebhook String?
 
   @@unique([email])
   @@map("user")
