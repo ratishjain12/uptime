@@ -15,7 +15,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Uptime",
   description:
-    "Free uptime monitoring for your sites with instant email and Slack alerts, downtime history.",
+    "Free uptime monitoring for your sites with instant Email, Slack and Webhook alerts, downtime history.",
+  openGraph: {
+    images: [
+      {
+        url: "/logo.svg",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
