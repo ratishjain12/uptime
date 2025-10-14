@@ -1,5 +1,5 @@
 import { resend } from "@/lib/resend/resend";
-import { sendMonitorSlackAlertForUser } from "@/actions/alerts";
+import { sendMonitorSlackAlertForUser } from "@/actions/alerts/slack";
 import { sendWebhookAlertForUser } from "@/actions/alerts/webhook";
 import { inngest } from "./client";
 import { prisma } from "@/lib/prisma/prisma";
