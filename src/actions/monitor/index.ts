@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/generated/prisma";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/prisma";
 import { revalidatePath } from "next/cache";
@@ -110,7 +111,7 @@ export const deleteMonitor = async (monitor: { id: string }) => {
   return deletedMonitor;
 };
 
-export const getMonitors = async () => {
+export const getMonitors = async (search?: string) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -119,8 +120,13 @@ export const getMonitors = async () => {
     throw new Error("Unauthorized");
   }
 
+  const where: Prisma.MonitorWhereInput = { userId: session.user.id };
+  if (search) {
+    where.name = { contains: search, mode: "insensitive" };
+  }
+
   const monitors = await prisma.monitor.findMany({
-    where: { userId: session.user.id },
+    where,
   });
 
   return monitors;

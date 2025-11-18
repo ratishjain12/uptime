@@ -4,21 +4,24 @@ import { AddMonitorModal } from "@/components/dashboard/modal";
 import { getMonitors } from "@/actions/monitor";
 import { Separator } from "@/components/ui/separator";
 import { MonitorCard } from "@/components/dashboard/card";
+import { SearchForm } from "@/components/dashboard/form/SearchForm";
 
-const getData = async () => {
-  const monitors = await getMonitors();
+type DashboardPageProps = {
+  searchParams: { search?: string };
+};
+
+const getData = async (search?: string) => {
+  const monitors = await getMonitors(search);
   return monitors;
 };
 
-const DashboardMonitors = async () => {
-  const monitors = await getData();
+const DashboardMonitors = async ({ search }: { search?: string }) => {
+  const monitors = await getData(search);
 
   if (!monitors.length) {
     return (
       <div className="rounded-lg border border-dashed p-8 text-center">
-        <p className="text-muted-foreground mb-4">
-          You have not added any monitors yet.
-        </p>
+        <p className="text-muted-foreground mb-4">No monitors found.</p>
         <AddMonitorModal />
       </div>
     );
@@ -35,7 +38,8 @@ const DashboardMonitors = async () => {
   );
 };
 
-const Page = () => {
+const Page = ({ searchParams }: DashboardPageProps) => {
+  const search = searchParams?.search?.toString() || "";
   return (
     <section className="space-y-6 p-6">
       <header className="flex items-center justify-between">
@@ -52,6 +56,8 @@ const Page = () => {
 
       <Separator />
 
+      <SearchForm defaultValue={search} />
+
       <Suspense
         fallback={
           <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
@@ -59,7 +65,7 @@ const Page = () => {
           </div>
         }
       >
-        <DashboardMonitors />
+        <DashboardMonitors search={search} />
       </Suspense>
     </section>
   );
