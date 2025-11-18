@@ -1,6 +1,6 @@
 import { resend } from "@/lib/resend/resend";
-import { sendMonitorSlackAlertForUser } from "@/actions/alerts/slack";
-import { sendWebhookAlertForUser } from "@/actions/alerts/webhook";
+import { sendMonitorSlackAlertForMonitor } from "@/actions/alerts/slack";
+import { sendWebhookAlertForMonitor } from "@/actions/alerts/webhook";
 import { inngest } from "./client";
 import { prisma } from "@/lib/prisma/prisma";
 
@@ -18,7 +18,7 @@ export const checkMonitor = inngest.createFunction(
       })
     );
 
-    if (!monitor || !monitor.isActive) {
+    if (!monitor || !monitor.isActive || monitor.type !== "HTTP_PING") {
       return { status: "skipped" as const };
     }
 
@@ -106,7 +106,6 @@ export const checkMonitor = inngest.createFunction(
       }
     }
 
-
     return { status, latency, statusDetail };
   }
 );
@@ -118,6 +117,7 @@ export const scheduleChecks = inngest.createFunction(
     const dueMonitors = await prisma.monitor.findMany({
       where: {
         isActive: true,
+        type: "HTTP_PING", // Only schedule HTTP_PING monitors
         nextCheckAt: { lte: new Date() },
       },
     });
@@ -143,7 +143,8 @@ export const sendMonitorDownAlert = inngest.createFunction(
   { id: "send-monitor-down-alert" },
   { event: "monitor/down" },
   async ({ event, step }) => {
-    const { name, url, statusDetail, userEmail, userId, latency } = event.data;
+    const { name, url, statusDetail, userEmail, userId, latency, monitorId } =
+      event.data;
 
     await step.run("send-alert", async () => {
       await resend.emails.send({
@@ -159,7 +160,7 @@ export const sendMonitorDownAlert = inngest.createFunction(
     });
 
     await step.run("send-slack-alert", async () => {
-      await sendMonitorSlackAlertForUser(userId, {
+      await sendMonitorSlackAlertForMonitor(monitorId, {
         title: "Monitor DOWN",
         monitorName: name,
         monitorUrl: url,
@@ -169,10 +170,10 @@ export const sendMonitorDownAlert = inngest.createFunction(
     });
 
     await step.run("send-webhook-alert", async () => {
-      await sendWebhookAlertForUser(userId, {
+      await sendWebhookAlertForMonitor(monitorId, {
         event: "monitor.down",
         monitor: {
-          id: event.data.monitorId,
+          id: monitorId,
           name,
           url,
           status: statusDetail,
@@ -187,4 +188,3 @@ export const sendMonitorDownAlert = inngest.createFunction(
     });
   }
 );
-

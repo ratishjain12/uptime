@@ -73,24 +73,38 @@ model Verification {
   @@map("verification")
 }
 
-model Monitor {
-  id             String   @id @default(uuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum MonitorType {
+  HTTP_PING
+  APP_LOG
+}
 
+model Monitor {
+  id             String      @id @default(uuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type           MonitorType @default(HTTP_PING)
   name           String
   url            String
 
-  isActive       Boolean  @default(true)
-  intervalSec    Int      @default(300)
+  isActive       Boolean     @default(true)
+  intervalSec    Int         @default(300)
   lastCheckedAt  DateTime?
   nextCheckAt    DateTime?
   lastStatus     String?
   lastLatencyMs  Int?
   lastNotifiedAt DateTime?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  slackWebhook   String?
+  customWebhook  String?
+
+  // APP_LOG specific fields
+  serviceToken   String?
+  serviceName    String?
+  logThreshold   String?    // e.g., "error", "warn", "info"
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   @@unique([userId, url])
   @@map("monitor")

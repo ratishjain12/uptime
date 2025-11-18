@@ -13,10 +13,10 @@ export const WebhookSettingsCard = async () => {
   return (
     <div className="space-y-4 rounded-lg border p-6">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold">Custom webhooks</h2>
+        <h2 className="text-lg font-semibold">Global webhook alert</h2>
         <p className="text-sm text-muted-foreground">
-          Send monitor events to any HTTP endpoint. Perfect for integrations with
-          Zapier, Make, or your own systems.
+          Send monitor events to any HTTP endpoint. Perfect for integrations
+          with Zapier, Make, or your own systems.
         </p>
       </div>
 
@@ -68,4 +68,3 @@ export const WebhookSettingsCard = async () => {
     </div>
   );
 };
-

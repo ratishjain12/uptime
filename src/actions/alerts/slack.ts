@@ -1,8 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
-
-import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/prisma";
 
 type SlackMessage = {
@@ -45,67 +42,45 @@ const postToWebhook = async (webhook: string, message: SlackMessage) => {
   }
 };
 
-const getUserWebhookBySession = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) throw new Error("Unauthorized");
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { slackWebhook: true },
-  });
-
-  const webhook = user?.slackWebhook?.trim();
-  if (!webhook) throw new Error("Slack webhook not connected");
-  return webhook;
-};
-
-const getUserWebhookByUserId = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { slackWebhook: true },
-  });
-  return user?.slackWebhook?.trim() ?? null;
-};
-
-export const sendSlackAlert = async (message: SlackMessage) => {
-  const webhook = await getUserWebhookBySession();
-  await postToWebhook(webhook, message);
-  return { ok: true } as const;
-};
-
-export const sendMonitorSlackAlert = async (input: MonitorAlertInput) => {
-  const text = buildMonitorText(input);
-  return sendSlackAlert({
-    text,
-    blocks: [
-      {
-        type: "section",
-        text: { type: "mrkdwn", text },
-      },
-    ],
-  });
-};
-
 // Background-safe helpers (no session required)
-export const sendSlackAlertForUser = async (
-  userId: string,
+export const sendSlackAlertForMonitor = async (
+  monitorId: string,
   message: SlackMessage
 ) => {
-  const webhook = await getUserWebhookByUserId(userId);
-  if (!webhook) return { ok: false as const, reason: "no-webhook" };
+  const monitor = await prisma.monitor.findUnique({
+    where: { id: monitorId },
+    select: { slackWebhook: true, userId: true },
+  });
+
+  if (!monitor) {
+    return { ok: false as const, reason: "monitor-not-found" };
+  }
+
+  // Try monitor-specific webhook first, then fall back to user default
+  let webhook = monitor.slackWebhook?.trim();
+
+  if (!webhook) {
+    const user = await prisma.user.findUnique({
+      where: { id: monitor.userId },
+      select: { slackWebhook: true },
+    });
+    webhook = user?.slackWebhook?.trim();
+  }
+
+  if (!webhook) {
+    return { ok: false as const, reason: "no-webhook" };
+  }
+
   await postToWebhook(webhook, message);
   return { ok: true as const };
 };
 
-export const sendMonitorSlackAlertForUser = async (
-  userId: string,
+export const sendMonitorSlackAlertForMonitor = async (
+  monitorId: string,
   input: MonitorAlertInput
 ) => {
   const text = buildMonitorText(input);
-  return sendSlackAlertForUser(userId, {
+  return sendSlackAlertForMonitor(monitorId, {
     text,
     blocks: [
       {

@@ -38,8 +38,9 @@ const DashboardMonitors = async ({ search }: { search?: string }) => {
   );
 };
 
-const Page = ({ searchParams }: DashboardPageProps) => {
-  const search = searchParams?.search?.toString() || "";
+const Page = async ({ searchParams }: DashboardPageProps) => {
+  const params = await searchParams;
+  const search = params?.search?.toString() || "";
   return (
     <section className="space-y-6 p-6">
       <header className="flex items-center justify-between">
