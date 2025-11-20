@@ -2,11 +2,15 @@
   "name": "uptime-service",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:logger": "npm run build --workspace=packages/logger"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
