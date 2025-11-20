@@ -1,0 +1,52 @@
+# Alerts
+
+Stay in control of the noise. Uptime Monitor makes it simple to choose who gets notified, how fast, and on which channel.
+
+## Channels at a glance
+
+### Email
+- Enabled by default for every user.
+- Ideal for personal notifications or small teams.
+- Includes monitor name, current status, and a deep link back to the dashboard.
+
+### Slack
+- Perfect for on-call rotations or team war rooms.
+- Send alerts to a shared channel or DM bot.
+- Supports per-monitor overrides so each service can post to a dedicated room.
+
+### Custom Webhooks
+- Forward alerts to PagerDuty, Microsoft Teams, SMS gateways, or internal tooling.
+- Each alert includes the monitor name, status, and relevant details so other systems can take action.
+- Webhooks automatically retry if the destination is temporarily unavailable.
+
+## Setting your defaults
+
+1. Go to **Settings → Alerts**.
+2. Add your preferred Slack channel or webhook URL.
+3. Click **Send test alert** to be sure the message arrives.
+4. Save—these defaults now apply to every new monitor.
+
+## Fine-tuning per monitor
+
+1. Open a monitor card and click the **bell** icon.
+2. Decide whether to inherit workspace defaults or override them.
+3. Choose different Slack channels or webhook URLs for especially noisy or critical services.
+4. Use the **Pause alerts** toggle when you plan maintenance.
+
+## Smart alerting
+
+- A 30-minute cooldown prevents duplicate alerts for the same monitor.
+- Alerts are sent when monitors go down and when they recover.
+
+## Tips
+
+- Route low-urgency monitors to a quieter channel so only mission-critical issues page the team.
+- Pair Slack alerts with webhooks to integrate with your ticketing tools.
+- Revisit your default channels quarterly—teams change, and alerts should follow the people who can fix them.
+
+Ready to see alerts in action? Continue to the [Usage Guide](/docs/usage) to learn more.
+
+---
+
+**Last updated**: {new Date().toLocaleDateString()}
+

@@ -1,0 +1,50 @@
+# Logger & Integrations
+
+Uptime Monitor works best when it plugs into the tools you already use. This page highlights how the upcoming logger package and existing integrations help you stay informed without extra effort.
+
+## App Logger package (coming soon)
+
+The logger package lets any application stream important events directly into Uptime Monitor.
+
+What to expect:
+
+- **Simple setup** – drop the package into your service, provide the monitor token, and you’re done.
+- **Structured events** – send messages with severity (error, warn, info, debug) so you can choose exactly when to alert.
+- **Automatic correlation** – every log-triggered alert links back to the originating monitor for instant context.
+
+Who is it for?
+
+- Backend services without a public URL.
+- Background workers and cron jobs.
+- Any app where you’d rather be alerted on internal errors than external uptime.
+
+## Slack
+
+- Connect once in **Settings → Alerts** and pick the channel that should receive notifications.
+- Use per-monitor overrides to route critical systems to on-call rooms and less urgent monitors to quieter channels.
+- Messages include monitor details and links back to the dashboard.
+
+## Email
+
+- Enabled for everyone out of the box.
+- Great for personal alerts or leadership summaries.
+- Includes a clear status, timestamps, and deep links back to the dashboard.
+
+## Custom webhooks
+
+- Point alerts to PagerDuty, Opsgenie, Microsoft Teams, SMS gateways, or any internal service.
+- Payloads include the monitor name, status, and relevant details so downstream systems can react automatically.
+- Built-in retries ensure alerts still land if the destination hiccups.
+
+## Suggested workflows
+
+- **PagerDuty or Opsgenie**: Use a webhook to trigger alerts for critical services while Slack handles notifications.
+- **Ticketing tools**: Send webhooks to Jira or Linear to create follow-up tasks when a monitor flaps frequently.
+- **Data warehouses**: Log every alert to your own analytics stack for long-term reporting.
+
+Have another integration in mind? Let us know from the dashboard feedback link—we’re expanding the catalog alongside the logger package rollout.
+
+---
+
+**Last updated**: {new Date().toLocaleDateString()}
+

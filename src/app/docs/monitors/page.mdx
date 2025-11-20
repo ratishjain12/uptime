@@ -1,0 +1,59 @@
+# Monitor Types
+
+Every monitor captures a different signal. Mix and match them to cover every layer of your stack.
+
+## Website & API Monitors (HTTP Ping)
+
+Great for: marketing sites, status pages, REST/GraphQL APIs, microservices.
+
+What they do:
+
+- Visit your URL on a schedule you choose (from every minute to once per hour).
+- Record the response time and status.
+- Flag outages immediately and show when service recovers.
+
+How to set one up:
+
+1. Paste the URL you want to watch.
+2. Choose a friendly name people will recognize.
+3. Pick the check frequency and whether the monitor should start active.
+
+What you’ll see:
+
+- Live status chips (Up, Warning, Down).
+- Response times and current status.
+- Alerts are triggered when monitors go down.
+
+## Application Log Monitors (App Logger)
+
+Great for: backend services, job runners, background workers, or anything without a public URL.
+
+What they do:
+
+- Listen to the dedicated logger package that ships with Uptime Monitor.
+- Let you choose the minimum severity that should trigger an alert (error-only or broader).
+- Monitor status updates in real-time when logs are received.
+
+How to set one up:
+
+1. Select **App Logger** when creating a monitor.
+2. Give it a name that matches the service sending logs.
+3. Choose the alert threshold: `Errors`, `Warnings`, `Info`, or `Everything`.
+
+What you’ll see:
+
+- Real-time log-driven alerts alongside your uptime checks.
+- Monitor status updates based on log severity thresholds.
+
+## Which should I choose?
+
+- Pick **Website & API** when you care about external availability and speed.
+- Pick **App Logger** when the signal lives inside your application (exceptions, failed jobs, dependency errors).
+- Use both for critical systems: the first tells you *if* customers are impacted, the second tells you *why*.
+
+Need help configuring alert destinations? Continue to the [Alerts guide](/docs/alerts) or jump into the [Usage Guide](/docs/usage) for a full walkthrough.
+
+---
+
+**Last updated**: {new Date().toLocaleDateString()}
+

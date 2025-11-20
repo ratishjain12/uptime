@@ -1,5 +1,5 @@
 "use client";
-import { LogOut, Settings, ScanHeart, Hexagon } from "lucide-react";
+import { LogOut, Settings, ScanHeart, Hexagon, Book } from "lucide-react";
 
 import { authClient } from "@/lib/auth/auth-client";
 
@@ -20,9 +20,14 @@ import { Separator } from "@/components/ui/separator";
 
 const items = [
   {
-    title: "Monitors",
+    title: "Dashboard",
     url: "/dashboard",
     icon: ScanHeart,
+  },
+  {
+    title: "docs",
+    url: "/docs",
+    icon: Book,
   },
   {
     title: "Settings",
