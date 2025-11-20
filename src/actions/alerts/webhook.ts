@@ -2,21 +2,43 @@
 
 import { prisma } from "@/lib/prisma/prisma";
 
-type WebhookPayload = {
-  event: "monitor.down";
-  monitor: {
-    id: string;
-    name: string;
-    url: string;
-    status: string;
-    responseTime?: number;
-  };
-  timestamp: string;
-  user: {
-    id: string;
-    email: string;
-  };
-};
+type WebhookPayload =
+  | {
+      event: "monitor.down";
+      monitor: {
+        id: string;
+        name: string;
+        url: string;
+        status: string;
+        responseTime?: number;
+      };
+      timestamp: string;
+      user: {
+        id: string;
+        email: string;
+      };
+    }
+  | {
+      event: "monitor.log.alert";
+      monitor: {
+        id: string;
+        name: string;
+        type: "APP_LOG";
+        serviceName: string;
+        status: string;
+      };
+      log: {
+        level: string;
+        message: string;
+        timestamp: string;
+        metadata?: Record<string, any>;
+      };
+      timestamp: string;
+      user: {
+        id: string;
+        email: string;
+      };
+    };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

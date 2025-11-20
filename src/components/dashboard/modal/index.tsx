@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { TokenDisplay } from "@/components/dashboard/token-display";
+import { Separator } from "@/components/ui/separator";
 
 const INTERVAL_OPTIONS = [
   { label: "Every minute", value: 1 * 60 },
@@ -179,7 +181,11 @@ function MonitorFormFields({
             </label>
             <Select
               key={`interval-${form.type}`}
-              value={form.intervalSec ? String(form.intervalSec) : String(DEFAULT_INTERVAL_SEC)}
+              value={
+                form.intervalSec
+                  ? String(form.intervalSec)
+                  : String(DEFAULT_INTERVAL_SEC)
+              }
               onValueChange={(value) =>
                 onFieldChange("intervalSec", Number(value))
               }
@@ -200,7 +206,10 @@ function MonitorFormFields({
       ) : (
         <>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="monitor-service-name">
+            <label
+              className="text-sm font-medium"
+              htmlFor="monitor-service-name"
+            >
               Service Name
             </label>
             <Input
@@ -218,7 +227,10 @@ function MonitorFormFields({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="monitor-log-threshold">
+            <label
+              className="text-sm font-medium"
+              htmlFor="monitor-log-threshold"
+            >
               Alert Threshold
             </label>
             <Select
@@ -299,16 +311,25 @@ function BaseMonitorModal({
   description,
   initialValues,
   onSubmit,
+  serviceToken,
+  monitorId,
 }: {
   trigger: React.ReactNode;
   title: string;
   description: string;
   initialValues: MonitorFormValues;
   onSubmit: (values: MonitorFormValues) => Promise<void>;
+  serviceToken?: string | null;
+  monitorId?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [token, setToken] = useState<string | null>(serviceToken ?? null);
   const { form, setField, error, setError, isPending, startTransition, reset } =
     useMonitorForm(initialValues);
+
+  const handleTokenUpdate = (newToken: string) => {
+    setToken(newToken);
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -361,6 +382,20 @@ function BaseMonitorModal({
         <form className="space-y-4" onSubmit={handleSubmit}>
           <MonitorFormFields form={form} onFieldChange={setField} />
 
+          {serviceToken && monitorId && form.type === "APP_LOG" && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">API Token</label>
+                <TokenDisplay
+                  token={token}
+                  monitorId={monitorId}
+                  onTokenUpdate={handleTokenUpdate}
+                />
+              </div>
+            </>
+          )}
+
           {error && (
             <p className="text-destructive text-sm" role="alert">
               {error}
@@ -403,7 +438,8 @@ const AddMonitorModal = () => (
         intervalSec: values.intervalSec,
         isActive: values.isActive,
         serviceName: values.type === "APP_LOG" ? values.serviceName : undefined,
-        logThreshold: values.type === "APP_LOG" ? values.logThreshold : undefined,
+        logThreshold:
+          values.type === "APP_LOG" ? values.logThreshold : undefined,
         createdAt: new Date(),
       });
     }}
@@ -423,6 +459,7 @@ const UpdateMonitorModal = ({
     isActive: boolean;
     serviceName?: string | null;
     logThreshold?: string | null;
+    serviceToken?: string | null;
   };
   children: React.ReactNode;
 }) => {
@@ -440,6 +477,8 @@ const UpdateMonitorModal = ({
         serviceName: monitor.serviceName ?? "",
         logThreshold: monitor.logThreshold ?? "error",
       }}
+      serviceToken={monitor.serviceToken}
+      monitorId={monitor.id}
       onSubmit={async (values) => {
         await updateMonitor({
           id: monitor.id,
@@ -448,8 +487,10 @@ const UpdateMonitorModal = ({
           url: values.type === "HTTP_PING" ? values.url : monitor.url,
           intervalSec: values.intervalSec,
           isActive: values.isActive,
-          serviceName: values.type === "APP_LOG" ? values.serviceName : undefined,
-          logThreshold: values.type === "APP_LOG" ? values.logThreshold : undefined,
+          serviceName:
+            values.type === "APP_LOG" ? values.serviceName : undefined,
+          logThreshold:
+            values.type === "APP_LOG" ? values.logThreshold : undefined,
         });
       }}
     />

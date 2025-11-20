@@ -1,10 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { deleteMonitor } from "@/actions/monitor";
 import { UpdateMonitorModal } from "@/components/dashboard/modal";
 import { AlertSettingsModal } from "@/components/dashboard/modal/alert-settings-modal";
+import { TokenDisplay } from "@/components/dashboard/token-display";
 import { Button } from "@/components/ui/button";
 import { PencilIcon, TrashIcon, BellIcon } from "lucide-react";
 
@@ -22,16 +23,22 @@ export type MonitorCardProps = {
     customWebhook: string | null;
     serviceName: string | null;
     logThreshold: string | null;
+    serviceToken: string | null;
   };
 };
 
 export const MonitorCard = ({ monitor }: MonitorCardProps) => {
   const [isDeleting, startTransition] = useTransition();
+  const [token, setToken] = useState(monitor.serviceToken);
 
   const handleDelete = () => {
     startTransition(async () => {
       await deleteMonitor({ id: monitor.id });
     });
+  };
+
+  const handleTokenUpdate = (newToken: string) => {
+    setToken(newToken);
   };
 
   const hasAlertsConfigured = !!(monitor.slackWebhook || monitor.customWebhook);
@@ -58,11 +65,6 @@ export const MonitorCard = ({ monitor }: MonitorCardProps) => {
               </span>
             )}
           </div>
-          <p className="text-muted-foreground text-sm break-all">
-            {monitor.type === "HTTP_PING"
-              ? monitor.url
-              : monitor.serviceName || "App Logger"}
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -103,6 +105,7 @@ export const MonitorCard = ({ monitor }: MonitorCardProps) => {
               isActive: monitor.isActive,
               serviceName: monitor.serviceName,
               logThreshold: monitor.logThreshold,
+              serviceToken: monitor.serviceToken,
             }}
           >
             <Button
@@ -159,6 +162,14 @@ export const MonitorCard = ({ monitor }: MonitorCardProps) => {
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Last status</dt>
               <dd>{monitor.lastStatus ?? "No logs yet"}</dd>
+            </div>
+            <div className="pt-2 border-t">
+              <dt className="text-muted-foreground text-xs mb-2">API Token</dt>
+              <TokenDisplay
+                token={token}
+                monitorId={monitor.id}
+                onTokenUpdate={handleTokenUpdate}
+              />
             </div>
           </>
         )}

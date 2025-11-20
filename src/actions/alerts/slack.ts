@@ -13,10 +13,35 @@ type MonitorAlertInput = {
   monitorUrl?: string;
   status?: string;
   latencyMs?: number | null;
+  // APP_LOG specific fields
+  serviceName?: string;
+  logLevel?: string;
+  logMessage?: string;
+  logTimestamp?: string;
+  metadata?: Record<string, any>;
 };
 
 // --- Internal helpers (deduplicate formatting and posting) ---
 const buildMonitorText = (input: MonitorAlertInput) => {
+  // Check if this is an APP_LOG alert
+  if (input.logLevel) {
+    const lines: string[] = [];
+    if (input.serviceName) lines.push(`*Monitor:* ${input.serviceName}`);
+    if (input.logLevel) lines.push(`*Level:* ${input.logLevel}`);
+    if (input.logMessage) lines.push(`*Message:* ${input.logMessage}`);
+    if (input.logTimestamp) {
+      const timestamp = new Date(input.logTimestamp).toLocaleString();
+      lines.push(`*Time:* ${timestamp}`);
+    }
+    if (input.metadata && Object.keys(input.metadata).length > 0) {
+      lines.push(
+        `*Metadata:* ${JSON.stringify(input.metadata, null, 2)}`
+      );
+    }
+    return [input.title, ...lines].join("\n");
+  }
+
+  // HTTP_PING format (existing)
   const lines: string[] = [];
   if (input.monitorName) lines.push(`*Monitor:* ${input.monitorName}`);
   if (input.monitorUrl) lines.push(`*URL:* ${input.monitorUrl}`);

@@ -188,3 +188,102 @@ export const sendMonitorDownAlert = inngest.createFunction(
     });
   }
 );
+
+export const sendLogAlert = inngest.createFunction(
+  { id: "send-log-alert" },
+  { event: "monitor/log.alert" },
+  async ({ event, step }) => {
+    const { monitorId, level, message, timestamp, serviceName, metadata } =
+      event.data;
+
+    // Load monitor to get user info and check cooldown
+    const monitor = await step.run("load monitor", async () =>
+      prisma.monitor.findUnique({
+        where: { id: monitorId },
+        include: { user: true },
+      })
+    );
+
+    if (!monitor) {
+      return { status: "skipped" as const, reason: "monitor-not-found" };
+    }
+
+    // Check cooldown (30 minutes) to prevent duplicate alerts
+    const lastNotifiedAtMs = monitor.lastNotifiedAt
+      ? new Date(monitor.lastNotifiedAt).getTime()
+      : null;
+
+    const shouldNotify =
+      !lastNotifiedAtMs || Date.now() - lastNotifiedAtMs > 30 * 60 * 1000; // >30m since last alert
+
+    if (!shouldNotify) {
+      return { status: "skipped" as const, reason: "cooldown-active" };
+    }
+
+    const alertTitle = `Log Alert: ${level.toUpperCase()}`;
+    const formattedTimestamp = timestamp
+      ? new Date(timestamp).toLocaleString()
+      : new Date().toLocaleString();
+
+    await step.run("send-email-alert", async () => {
+      await resend.emails.send({
+        from: "alerts@updates.ratishfolio.com",
+        to: [monitor.user.email],
+        subject: alertTitle,
+        html: `
+        <h2>${alertTitle}</h2>
+        <p><strong>Monitor:</strong> ${serviceName || monitor.name}</p>
+        <p><strong>Level:</strong> ${level}</p>
+        <p><strong>Message:</strong> ${message}</p>
+        <p><strong>Time:</strong> ${formattedTimestamp}</p>
+        ${metadata ? `<p><strong>Metadata:</strong> <pre>${JSON.stringify(metadata, null, 2)}</pre></p>` : ""}
+      `,
+      });
+    });
+
+    await step.run("send-slack-alert", async () => {
+      await sendMonitorSlackAlertForMonitor(monitorId, {
+        title: alertTitle,
+        serviceName: serviceName || monitor.name,
+        logLevel: level,
+        logMessage: message,
+        logTimestamp: timestamp || new Date().toISOString(),
+        metadata,
+      });
+    });
+
+    await step.run("send-webhook-alert", async () => {
+      await sendWebhookAlertForMonitor(monitorId, {
+        event: "monitor.log.alert",
+        monitor: {
+          id: monitorId,
+          name: monitor.name,
+          type: "APP_LOG",
+          serviceName: serviceName || monitor.name,
+          status: level.toUpperCase(),
+        },
+        log: {
+          level,
+          message,
+          timestamp: timestamp || new Date().toISOString(),
+          metadata,
+        },
+        timestamp: new Date().toISOString(),
+        user: {
+          id: monitor.userId,
+          email: monitor.user.email,
+        },
+      });
+    });
+
+    // Mark as notified
+    await step.run("mark notified", async () => {
+      await prisma.monitor.update({
+        where: { id: monitorId },
+        data: { lastNotifiedAt: new Date() },
+      });
+    });
+
+    return { status: "sent" as const };
+  }
+);

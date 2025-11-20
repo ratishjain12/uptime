@@ -99,7 +99,7 @@ model Monitor {
   customWebhook  String?
 
   // APP_LOG specific fields
-  serviceToken   String?
+  serviceToken   String?    @unique
   serviceName    String?
   logThreshold   String?    // e.g., "error", "warn", "info"
 
@@ -107,5 +107,6 @@ model Monitor {
   updatedAt      DateTime    @updatedAt
 
   @@unique([userId, url])
+  @@index([serviceToken])
   @@map("monitor")
 }

@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma/prisma";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { generateServiceToken } from "@/lib/utils/token";
 
 type CreateMonitorInput = {
   name: string;
@@ -49,6 +50,9 @@ export const createMonitor = async (monitor: CreateMonitorInput) => {
       ? new Date(now.getTime() + interval * 1000)
       : null;
 
+  // Generate service token for APP_LOG monitors
+  const serviceToken = monitorType === "APP_LOG" ? generateServiceToken() : null;
+
   const createdMonitor = await prisma.monitor.create({
     data: {
       name: monitor.name,
@@ -60,6 +64,7 @@ export const createMonitor = async (monitor: CreateMonitorInput) => {
       nextCheckAt,
       createdAt: monitor.createdAt ?? new Date(),
       // APP_LOG specific fields
+      serviceToken,
       serviceName: monitor.serviceName ?? null,
       logThreshold: monitor.logThreshold ?? null,
     },
@@ -164,8 +169,74 @@ export const getMonitors = async (search?: string) => {
       customWebhook: true,
       serviceName: true,
       logThreshold: true,
+      serviceToken: true, // Include token for APP_LOG monitors
     },
   });
 
   return monitors;
+};
+
+export const regenerateToken = async (monitorId: string) => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const existing = await prisma.monitor.findUnique({
+    where: { id: monitorId },
+  });
+
+  if (!existing) {
+    throw new Error("Monitor not found");
+  }
+
+  if (existing.userId !== session.user.id) {
+    throw new Error("Unauthorized");
+  }
+
+  if (existing.type !== "APP_LOG") {
+    throw new Error("Token regeneration is only available for APP_LOG monitors");
+  }
+
+  const newToken = generateServiceToken();
+
+  const updatedMonitor = await prisma.monitor.update({
+    where: { id: monitorId },
+    data: { serviceToken: newToken },
+  });
+
+  revalidatePath("/dashboard");
+  return { token: updatedMonitor.serviceToken };
+};
+
+export const getMonitorToken = async (monitorId: string) => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const monitor = await prisma.monitor.findUnique({
+    where: { id: monitorId },
+    select: { userId: true, type: true, serviceToken: true },
+  });
+
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
+
+  if (monitor.userId !== session.user.id) {
+    throw new Error("Unauthorized");
+  }
+
+  if (monitor.type !== "APP_LOG") {
+    throw new Error("Token is only available for APP_LOG monitors");
+  }
+
+  return { token: monitor.serviceToken };
 };
