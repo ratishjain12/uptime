@@ -1,22 +1,161 @@
 # Logger & Integrations
 
-Uptime Monitor works best when it plugs into the tools you already use. This page highlights how the upcoming logger package and existing integrations help you stay informed without extra effort.
+Uptime Monitor works best when it plugs into the tools you already use. This page highlights how the logger package and existing integrations help you stay informed without extra effort.
 
-## App Logger package (coming soon)
+## App Logger Package
 
 The logger package lets any application stream important events directly into Uptime Monitor.
 
-What to expect:
+### Installation
 
-- **Simple setup** – drop the package into your service, provide the monitor token, and you’re done.
-- **Structured events** – send messages with severity (error, warn, info, debug) so you can choose exactly when to alert.
-- **Automatic correlation** – every log-triggered alert links back to the originating monitor for instant context.
+```bash
+npm install @uptime-cli/logger
+```
 
-Who is it for?
+Or with yarn:
 
-- Backend services without a public URL.
-- Background workers and cron jobs.
-- Any app where you’d rather be alerted on internal errors than external uptime.
+```bash
+yarn add @uptime-cli/logger
+```
+
+Or with pnpm:
+
+```bash
+pnpm add @uptime-cli/logger
+```
+
+### Quick Start
+
+```typescript
+import { UptimeLogger } from '@uptime-cli/logger';
+
+// Initialize with your service token from the monitor dashboard
+const logger = new UptimeLogger({
+  token: 'upt_your_service_token_here',
+  serviceName: 'my-service',
+  baseUrl: process.env.UPTIME_API_URL // Optional
+});
+
+// Log at different severity levels
+logger.error('Database connection failed');
+logger.warn('High memory usage detected');
+logger.info('User logged in', { userId: '123' });
+logger.debug('Processing request', { requestId: 'req-456' });
+```
+
+### Getting Your Service Token
+
+1. Sign in to your Uptime Monitor dashboard
+2. Create a new **App Logger** monitor
+3. Copy the service token displayed on the monitor card
+4. Use this token when initializing the logger
+
+### Features
+
+- **Simple setup** – drop the package into your service, provide the monitor token, and you're done
+- **Structured events** – send messages with severity (error, warn, info, debug) so you can choose exactly when to alert
+- **Automatic correlation** – every log-triggered alert links back to the originating monitor for instant context
+- **Child loggers** – create context-aware loggers that automatically include request IDs, user IDs, and other metadata
+- **Non-blocking** – logs are sent asynchronously and won't slow down your application
+
+### Who is it for?
+
+- Backend services without a public URL
+- Background workers and cron jobs
+- Any app where you'd rather be alerted on internal errors than external uptime
+
+### Example Usage
+
+#### Express.js
+
+```typescript
+import express from 'express';
+import { UptimeLogger } from '@uptime-cli/logger';
+
+const logger = new UptimeLogger({
+  token: process.env.UPTIME_SERVICE_TOKEN,
+  serviceName: 'express-api'
+});
+
+app.use((req, res, next) => {
+  req.logger = logger.child({ 
+    requestId: req.id,
+    path: req.path,
+    method: req.method
+  });
+  next();
+});
+
+app.post('/users', async (req, res) => {
+  try {
+    const user = await createUser(req.body);
+    req.logger.info('User created', { userId: user.id });
+    res.json(user);
+  } catch (error) {
+    req.logger.error('Failed to create user', { 
+      error: error.message,
+      stack: error.stack 
+    });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+#### Next.js API Routes
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { UptimeLogger } from '@uptime-cli/logger';
+
+const logger = new UptimeLogger({
+  token: process.env.UPTIME_SERVICE_TOKEN!,
+  serviceName: 'nextjs-api'
+});
+
+export async function POST(request: NextRequest) {
+  const requestLogger = logger.child({
+    path: request.nextUrl.pathname,
+    method: 'POST'
+  });
+
+  try {
+    const body = await request.json();
+    const user = await createUser(body);
+    requestLogger.info('User created', { userId: user.id });
+    return NextResponse.json(user);
+  } catch (error) {
+    requestLogger.error('Failed to create user', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Alert Thresholds
+
+Configure alert thresholds in your monitor settings:
+
+- **Error only** – Only `error` level logs trigger alerts
+- **Warnings and above** – `error` and `warn` logs trigger alerts
+- **Info and above** – `error`, `warn`, and `info` logs trigger alerts
+- **Everything** – All log levels trigger alerts
+
+### Severity-Based Cooldowns
+
+The system uses intelligent cooldowns to prevent alert fatigue:
+
+- **Error**: 5-minute cooldown (critical issues need quick alerts)
+- **Warn**: 15-minute cooldown (moderate frequency)
+- **Info**: 30-minute cooldown (less frequent)
+- **Debug**: 60-minute cooldown (rarely alert)
+
+Higher severity alerts can override lower severity alerts. For example, an error will always send an alert even if a warning was recently sent.
+
+For complete documentation, see the [logger package README](https://www.npmjs.com/package/@uptime-cli/logger).
 
 ## Slack
 

@@ -14,10 +14,10 @@ const LOG_LEVEL_SEVERITY: Record<string, number> = {
  * Higher severity = shorter cooldown (more frequent alerts)
  */
 export const LOG_LEVEL_COOLDOWNS: Record<string, number> = {
-  error: 5 * 60 * 1000,    // 5 minutes - critical issues need quick alerts
-  warn: 15 * 60 * 1000,    // 15 minutes - moderate frequency
-  info: 30 * 60 * 1000,    // 30 minutes - less frequent
-  debug: 60 * 60 * 1000,   // 60 minutes - rarely alert
+  error: 5 * 60 * 1000, // 5 minutes - critical issues need quick alerts
+  warn: 15 * 60 * 1000, // 15 minutes - moderate frequency
+  info: 30 * 60 * 1000, // 30 minutes - less frequent
+  debug: 60 * 60 * 1000, // 60 minutes - rarely alert
 };
 
 /**
@@ -69,7 +69,7 @@ export async function updateMonitorStatus(
   level: string
 ): Promise<void> {
   const { prisma } = await import("@/lib/prisma/prisma");
-  
+
   await prisma.monitor.update({
     where: { id: monitorId },
     data: {
@@ -108,8 +108,8 @@ export function shouldSendAlert(
 
   // For same or lower severity, check cooldown
   const normalizedLevel = currentLevel.toLowerCase();
-  const cooldown = LOG_LEVEL_COOLDOWNS[normalizedLevel] || LOG_LEVEL_COOLDOWNS.info;
+  const cooldown =
+    LOG_LEVEL_COOLDOWNS[normalizedLevel] || LOG_LEVEL_COOLDOWNS.info;
 
   return timeSinceLastAlert > cooldown;
 }
-
