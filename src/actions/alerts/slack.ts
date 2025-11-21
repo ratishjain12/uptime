@@ -18,7 +18,7 @@ type MonitorAlertInput = {
   logLevel?: string;
   logMessage?: string;
   logTimestamp?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 };
 
 // --- Internal helpers (deduplicate formatting and posting) ---

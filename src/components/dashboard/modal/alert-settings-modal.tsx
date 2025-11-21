@@ -35,13 +35,6 @@ type AlertSettingsModalProps = {
   children: React.ReactNode;
 };
 
-const DEFAULT_FORM: AlertSettingsFormValues = {
-  slackWebhook: "",
-  customWebhook: "",
-  useSlack: false,
-  useCustomWebhook: false,
-};
-
 function useAlertSettingsForm(initialForm: AlertSettingsFormValues) {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState<string | null>(null);
@@ -158,9 +151,6 @@ export const AlertSettingsModal = ({
     });
   };
 
-  const hasAlertsConfigured =
-    form.useSlack || form.useCustomWebhook || monitor.slackWebhook || monitor.customWebhook;
-
   return (
     <Dialog
       open={open}
@@ -179,8 +169,8 @@ export const AlertSettingsModal = ({
             Alert Settings
           </DialogTitle>
           <DialogDescription>
-            Configure alert destinations for <strong>{monitor.name}</strong>. You
-            can set up Slack notifications, custom webhooks, or both.
+            Configure alert destinations for <strong>{monitor.name}</strong>.
+            You can set up Slack notifications, custom webhooks, or both.
           </DialogDescription>
         </DialogHeader>
 
@@ -385,4 +375,3 @@ const TestWebhookButton = ({ monitorId }: { monitorId: string }) => {
     </div>
   );
 };
-

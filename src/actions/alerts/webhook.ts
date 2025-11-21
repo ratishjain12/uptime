@@ -31,7 +31,7 @@ type WebhookPayload =
         level: string;
         message: string;
         timestamp: string;
-        metadata?: Record<string, any>;
+        metadata?: Record<string, unknown>;
       };
       timestamp: string;
       user: {

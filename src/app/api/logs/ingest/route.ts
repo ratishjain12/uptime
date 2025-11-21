@@ -10,7 +10,7 @@ type LogPayload = {
   level: "error" | "warn" | "info" | "debug";
   message: string;
   timestamp?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 };
 
 /**
