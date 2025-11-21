@@ -1,11 +1,21 @@
-import { Footer, Layout, Navbar } from "nextra-theme-docs";
+import { Footer, Layout, Link, Navbar } from "nextra-theme-docs";
 import { getPageMap } from "nextra/page-map";
 import "nextra-theme-docs/style.css";
+import { Hexagon } from "lucide-react";
 
 const navbar = (
   <Navbar
-    logo={<b>Uptime</b>}
-    // ... Your additional navbar options
+    logo={
+      <span className="flex gap-2 items-center">
+        <Hexagon className="h-9 w-9" />
+        <Link
+          href="/dashboard"
+          className="text-lg font-semibold tracking-tight"
+        >
+          uptime
+        </Link>
+      </span>
+    }
   />
 );
 const footer = <Footer>{new Date().getFullYear()} © Uptime.</Footer>;
