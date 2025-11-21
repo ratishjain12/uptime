@@ -94,6 +94,7 @@ model Monitor {
   lastStatus     String?
   lastLatencyMs  Int?
   lastNotifiedAt DateTime?
+  lastAlertLevel String?    // Track severity level of last alert (for cooldown logic)
 
   slackWebhook   String?
   customWebhook  String?

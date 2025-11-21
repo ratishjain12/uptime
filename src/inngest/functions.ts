@@ -3,6 +3,7 @@ import { sendMonitorSlackAlertForMonitor } from "@/actions/alerts/slack";
 import { sendWebhookAlertForMonitor } from "@/actions/alerts/webhook";
 import { inngest } from "./client";
 import { prisma } from "@/lib/prisma/prisma";
+import { shouldSendAlert } from "@/lib/monitor/log-processor";
 
 export const checkMonitor = inngest.createFunction(
   { id: "monitor-check" },
@@ -231,16 +232,25 @@ export const sendLogAlert = inngest.createFunction(
       return { status: "skipped" as const, reason: "monitor-not-found" };
     }
 
-    // Check cooldown (30 minutes) to prevent duplicate alerts
-    const lastNotifiedAtMs = monitor.lastNotifiedAt
-      ? new Date(monitor.lastNotifiedAt).getTime()
+    // Check severity-based cooldown with escalation
+    // Higher severity (error) can override lower severity (warn) alerts
+    const lastNotifiedAtDate = monitor.lastNotifiedAt
+      ? new Date(monitor.lastNotifiedAt)
       : null;
 
-    const shouldNotify =
-      !lastNotifiedAtMs || Date.now() - lastNotifiedAtMs > 30 * 60 * 1000; // >30m since last alert
+    const shouldNotify = shouldSendAlert(
+      level,
+      monitor.lastAlertLevel,
+      lastNotifiedAtDate
+    );
 
     if (!shouldNotify) {
-      return { status: "skipped" as const, reason: "cooldown-active" };
+      return {
+        status: "skipped" as const,
+        reason: "cooldown-active",
+        lastAlertLevel: monitor.lastAlertLevel,
+        lastNotifiedAt: monitor.lastNotifiedAt,
+      };
     }
 
     const alertTitle = `Log Alert: ${level.toUpperCase()}`;
@@ -299,11 +309,14 @@ export const sendLogAlert = inngest.createFunction(
       });
     });
 
-    // Mark as notified
+    // Mark as notified with current alert level
     await step.run("mark notified", async () => {
       await prisma.monitor.update({
         where: { id: monitorId },
-        data: { lastNotifiedAt: new Date() },
+        data: {
+          lastNotifiedAt: new Date(),
+          lastAlertLevel: level.toUpperCase(),
+        },
       });
     });
 

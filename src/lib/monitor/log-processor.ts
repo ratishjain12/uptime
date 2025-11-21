@@ -10,6 +10,17 @@ const LOG_LEVEL_SEVERITY: Record<string, number> = {
 };
 
 /**
+ * Cooldown periods in milliseconds for each log level
+ * Higher severity = shorter cooldown (more frequent alerts)
+ */
+export const LOG_LEVEL_COOLDOWNS: Record<string, number> = {
+  error: 5 * 60 * 1000,    // 5 minutes - critical issues need quick alerts
+  warn: 15 * 60 * 1000,    // 15 minutes - moderate frequency
+  info: 30 * 60 * 1000,    // 30 minutes - less frequent
+  debug: 60 * 60 * 1000,   // 60 minutes - rarely alert
+};
+
+/**
  * Get numeric severity for a log level
  * @param level - Log level (debug, info, warn, error)
  * @returns Numeric severity (0-3)
@@ -66,5 +77,39 @@ export async function updateMonitorStatus(
       lastCheckedAt: new Date(),
     },
   });
+}
+
+/**
+ * Check if an alert should be sent based on severity-based cooldown and escalation
+ * @param currentLevel - Current log level
+ * @param lastAlertLevel - Last alert level that was sent
+ * @param lastNotifiedAt - Timestamp of last alert
+ * @returns true if alert should be sent
+ */
+export function shouldSendAlert(
+  currentLevel: string,
+  lastAlertLevel: string | null,
+  lastNotifiedAt: Date | null
+): boolean {
+  // First alert - always send
+  if (!lastNotifiedAt || !lastAlertLevel) {
+    return true;
+  }
+
+  const currentSeverity = getLogLevelSeverity(currentLevel);
+  const lastSeverity = getLogLevelSeverity(lastAlertLevel);
+  const timeSinceLastAlert = Date.now() - new Date(lastNotifiedAt).getTime();
+
+  // Severity escalation: Higher severity can override lower severity
+  // If current alert is more severe than last alert, always send
+  if (currentSeverity > lastSeverity) {
+    return true;
+  }
+
+  // For same or lower severity, check cooldown
+  const normalizedLevel = currentLevel.toLowerCase();
+  const cooldown = LOG_LEVEL_COOLDOWNS[normalizedLevel] || LOG_LEVEL_COOLDOWNS.info;
+
+  return timeSinceLastAlert > cooldown;
 }
 
