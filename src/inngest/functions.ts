@@ -22,6 +22,29 @@ export const checkMonitor = inngest.createFunction(
       return { status: "skipped" as const };
     }
 
+    // Prevent duplicate concurrent checks: verify monitor is still due
+    const now = new Date();
+    if (
+      monitor.nextCheckAt &&
+      new Date(monitor.nextCheckAt).getTime() > now.getTime()
+    ) {
+      return {
+        status: "skipped" as const,
+        reason: "already-scheduled",
+        nextCheckAt: monitor.nextCheckAt,
+      };
+    }
+
+    // Update nextCheckAt immediately to prevent concurrent checks
+    // This acts as a lock mechanism
+    const nextCheckAt = new Date(Date.now() + monitor.intervalSec * 1000);
+    await step.run("lock monitor", async () =>
+      prisma.monitor.update({
+        where: { id: monitor.id },
+        data: { nextCheckAt },
+      })
+    );
+
     // 2. Ping monitor
     const { status, latency, statusDetail } = await step.run(
       "ping monitor",
@@ -56,9 +79,7 @@ export const checkMonitor = inngest.createFunction(
       }
     );
 
-    // 3. Update DB (status + schedule next check)
-    const now = new Date();
-
+    // 3. Update DB (status - nextCheckAt already set in lock step)
     await step.run("update monitor", async () =>
       prisma.monitor.update({
         where: { id: monitor.id },
@@ -66,7 +87,7 @@ export const checkMonitor = inngest.createFunction(
           lastCheckedAt: now,
           lastStatus: status,
           lastLatencyMs: latency,
-          nextCheckAt: new Date(Date.now() + monitor.intervalSec * 1000),
+          // nextCheckAt already set in "lock monitor" step above
         },
       })
     );
@@ -120,6 +141,8 @@ export const scheduleChecks = inngest.createFunction(
         type: "HTTP_PING", // Only schedule HTTP_PING monitors
         nextCheckAt: { lte: new Date() },
       },
+      take: 100, // Process max 100 monitors per run to prevent overload
+      orderBy: { nextCheckAt: "asc" }, // Process oldest due checks first
     });
 
     if (!dueMonitors.length) return { scheduled: 0 };
