@@ -1,5 +1,5 @@
 {
-  "name": "@uptime/logger",
+  "name": "@uptime-cli/logger",
   "version": "1.0.0",
   "description": "Logger package for Uptime Monitor - send application logs to Uptime Monitor API",
   "main": "./dist/index.js",
