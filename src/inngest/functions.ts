@@ -255,8 +255,10 @@ export const sendLogAlert = inngest.createFunction(
 
     const alertTitle = `Log Alert: ${level.toUpperCase()}`;
     const formattedTimestamp = timestamp
-      ? new Date(timestamp).toLocaleString()
-      : new Date().toLocaleString();
+      ? new Date(timestamp).toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        })
+      : new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
     await step.run("send-email-alert", async () => {
       await resend.emails.send({

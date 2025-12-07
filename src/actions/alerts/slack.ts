@@ -30,13 +30,13 @@ const buildMonitorText = (input: MonitorAlertInput) => {
     if (input.logLevel) lines.push(`*Level:* ${input.logLevel}`);
     if (input.logMessage) lines.push(`*Message:* ${input.logMessage}`);
     if (input.logTimestamp) {
-      const timestamp = new Date(input.logTimestamp).toLocaleString();
+      const timestamp = new Date(input.logTimestamp).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      });
       lines.push(`*Time:* ${timestamp}`);
     }
     if (input.metadata && Object.keys(input.metadata).length > 0) {
-      lines.push(
-        `*Metadata:* ${JSON.stringify(input.metadata, null, 2)}`
-      );
+      lines.push(`*Metadata:* ${JSON.stringify(input.metadata, null, 2)}`);
     }
     return [input.title, ...lines].join("\n");
   }
